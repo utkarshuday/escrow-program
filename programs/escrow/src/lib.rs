@@ -19,4 +19,8 @@ pub mod escrow {
     ) -> Result<()> {
         handlers::make_offer(ctx, id, token_a_amount_offered, token_b_amount_wanted)
     }
+
+    pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
+        handlers::take_offer(ctx)
+    }
 }

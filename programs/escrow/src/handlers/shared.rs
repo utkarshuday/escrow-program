@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     transfer_checked,
+    close_account,
+    CloseAccount,
     Mint,
     TokenAccount,
     TokenInterface,
@@ -35,5 +37,31 @@ pub fn transfer_tokens<'info>(
         },
         *amount,
         mint.decimals
+    )
+}
+
+pub fn close_token_account<'info>(
+    account: &InterfaceAccount<'info, TokenAccount>,
+    authority: &AccountInfo<'info>,
+    destination: &AccountInfo<'info>,
+    token_program: &Interface<'info, TokenInterface>,
+    owning_pda_seeds: Option<&[&[u8]]>
+) -> Result<()> {
+    let cpi_accounts = CloseAccount {
+        account: account.to_account_info(),
+        authority: authority.to_account_info(),
+        destination: destination.to_account_info(),
+    };
+
+    let cpi_program = token_program.to_account_info();
+
+    let signer_seeds = owning_pda_seeds.map(|seeds| [seeds]);
+
+    close_account(
+        if let Some(seeds) = signer_seeds.as_ref() {
+            CpiContext::new(cpi_program, cpi_accounts).with_signer(seeds)
+        } else {
+            CpiContext::new(cpi_program, cpi_accounts)
+        }
     )
 }

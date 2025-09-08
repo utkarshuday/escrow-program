@@ -3,8 +3,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{ Mint, TokenAccount, TokenInterface },
 };
-
-use crate::state::Offer;
+use crate::{ handlers::shared::{ close_token_account, transfer_tokens }, state::Offer };
 
 #[derive(Accounts)]
 pub struct TakeOffer<'info> {
@@ -70,6 +69,35 @@ pub struct TakeOffer<'info> {
 }
 
 pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
-    let seeds = &[&[b"offer", ctx.accounts.offer.id.to_le_bytes().as_ref()]];
-    Ok(())
+    let id_bytes = ctx.accounts.offer.id.to_le_bytes();
+    let seeds = &[b"offer", id_bytes.as_ref(), &[ctx.accounts.offer.bump]];
+    let signer_seeds = Some(seeds.as_ref());
+
+    transfer_tokens(
+        &ctx.accounts.vault,
+        &ctx.accounts.taker_token_account_a,
+        &ctx.accounts.vault.amount,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_mint_a,
+        &ctx.accounts.offer.to_account_info(),
+        signer_seeds
+    )?;
+
+    close_token_account(
+        &ctx.accounts.vault,
+        &ctx.accounts.offer.to_account_info(),
+        &ctx.accounts.maker,
+        &ctx.accounts.token_program,
+        signer_seeds
+    )?;
+
+    transfer_tokens(
+        &ctx.accounts.taker_token_account_b,
+        &ctx.accounts.maker_token_account_b,
+        &ctx.accounts.offer.token_b_amount_wanted,
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_mint_b,
+        &ctx.accounts.taker,
+        None
+    )
 }
