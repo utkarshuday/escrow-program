@@ -23,4 +23,8 @@ pub mod escrow {
     pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         handlers::take_offer(ctx)
     }
+
+    pub fn refund_offer(ctx: Context<RefundOffer>) -> Result<()> {
+        handlers::refund_offer(ctx)
+    }
 }

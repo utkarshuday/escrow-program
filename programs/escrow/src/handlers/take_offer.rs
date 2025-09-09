@@ -86,7 +86,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
     close_token_account(
         &ctx.accounts.vault,
         &ctx.accounts.offer.to_account_info(),
-        &ctx.accounts.maker,
+        &ctx.accounts.maker.to_account_info(),
         &ctx.accounts.token_program,
         signer_seeds
     )?;
