@@ -12,6 +12,7 @@ import {
   ONE_SOL,
   createTokenMint,
   mintToken,
+  generateKeyPairSignerWithSol,
 } from './escrow.test-helper';
 import {
   getAssociatedTokenAccountAddress,
@@ -28,29 +29,10 @@ describe('Escrow', async () => {
   let bobTokenAccountB: Address;
 
   before(async () => {
-    // Generate wallets
-    wallet = await generateKeyPairSigner();
-    bob = await generateKeyPairSigner();
-    alice = await generateKeyPairSigner();
     // Airdrop some SOL in the wallets
-    const airdrop = airdropFactory({ rpc, rpcSubscriptions });
-    await Promise.all([
-      airdrop({
-        commitment: 'confirmed',
-        recipientAddress: wallet.address,
-        lamports: lamports(BigInt(1 * ONE_SOL)),
-      }),
-      airdrop({
-        commitment: 'confirmed',
-        recipientAddress: alice.address,
-        lamports: lamports(BigInt(1 * ONE_SOL)),
-      }),
-      airdrop({
-        commitment: 'confirmed',
-        recipientAddress: bob.address,
-        lamports: lamports(BigInt(1 * ONE_SOL)),
-      }),
-    ]);
+    [alice, bob, wallet] = await Promise.all(
+      Array.from({ length: 3 }, () => generateKeyPairSignerWithSol())
+    );
     // Create Token mints
     tokenMintA = await createTokenMint({
       feePayer: wallet,

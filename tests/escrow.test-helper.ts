@@ -1,7 +1,9 @@
 import {
   Address,
+  airdropFactory,
   createSolanaClient,
   generateKeyPairSigner,
+  lamports,
   signTransactionMessageWithSigners,
   type TransactionSigner,
 } from 'gill';
@@ -17,6 +19,18 @@ export const { rpc, rpcSubscriptions, sendAndConfirmTransaction } =
   createSolanaClient({
     urlOrMoniker: 'http://127.0.0.1:8899',
   });
+
+export async function generateKeyPairSignerWithSol(
+  putativeLamports: bigint = 1_000_000_000n
+) {
+  const signer = await generateKeyPairSigner();
+  await airdropFactory({ rpc, rpcSubscriptions })({
+    recipientAddress: signer.address,
+    lamports: lamports(putativeLamports),
+    commitment: 'confirmed',
+  });
+  return signer;
+}
 
 export async function createTokenMint({
   feePayer,
