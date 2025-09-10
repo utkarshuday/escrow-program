@@ -2,9 +2,9 @@
 use anchor_lang::prelude::*;
 use handlers::*;
 
-mod handlers;
-mod state;
-mod error;
+pub mod handlers;
+pub mod state;
+pub mod error;
 
 declare_id!("FUcrdwZAbMgHknZh1ZoXkWdM75MDANE6UdDpxkPaz5qh");
 
