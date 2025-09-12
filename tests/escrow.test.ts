@@ -59,7 +59,6 @@ describe('Escrow', async () => {
         id,
         tokenAAmountOffered,
         tokenBAmountWanted,
-        maker: testEnv.bob,
       }));
       try {
         const signedTransaction =
