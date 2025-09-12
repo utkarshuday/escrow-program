@@ -94,7 +94,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     latestBlockhash,
     mint: tokenMintA,
     mintAuthority: authority,
-    amount: 10 * 1_000_000_000,
+    amount: 1000 * 1_000_000_000,
     destination: alice.address,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
   });
@@ -106,7 +106,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     latestBlockhash,
     mint: tokenMintB,
     mintAuthority: authority,
-    amount: 1 * 1_000_000_000,
+    amount: 100 * 1_000_000_000,
     destination: bob.address,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
   });
@@ -180,7 +180,7 @@ export async function sendMakeOfferInstruction({
     .getLatestBlockhash()
     .send();
   const createTx = createTransaction({
-    feePayer: testEnv.authority,
+    feePayer: maker,
     instructions: [makeOfferIx],
     latestBlockhash,
   });

@@ -6,6 +6,13 @@ import {
   sendMakeOfferInstruction,
   TestEnvironment,
 } from './escrow.test-helper';
+import {
+  isProgramError,
+  isSolanaError,
+  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
+} from 'gill';
+import { ESCROW_PROGRAM_ADDRESS } from '../clients/js/src/generated';
 
 describe('Escrow', async () => {
   let testEnv: TestEnvironment;
@@ -34,6 +41,33 @@ describe('Escrow', async () => {
       );
     });
 
-    it('fails when trying to reuse an existing offer ID', async () => {});
+    it('fails when trying to reuse an existing offer ID', async () => {
+      const id = getRandomId();
+      await sendMakeOfferInstruction({
+        testEnv,
+        id,
+        tokenAAmountOffered,
+        tokenBAmountWanted,
+      });
+      try {
+        await sendMakeOfferInstruction({
+          testEnv,
+          id,
+          tokenAAmountOffered,
+          tokenBAmountWanted,
+        });
+        assert.ok(false, 'Offer creation did not fail for same ID');
+      } catch (err) {
+        if (
+          isSolanaError(
+            err,
+            SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+          )
+        ) {
+          const underlyingError = err.cause;
+          assert.ok(true);
+        }
+      }
+    });
   });
 });
