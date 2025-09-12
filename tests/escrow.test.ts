@@ -3,16 +3,15 @@ import { describe, before, it } from 'node:test';
 import {
   createTestEnvironment,
   getRandomId,
-  sendMakeOfferInstruction,
+  createMakeOfferInstruction,
   TestEnvironment,
 } from './escrow.test-helper';
 import {
   isProgramError,
   isSolanaError,
-  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  signTransactionMessageWithSigners,
   SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
 } from 'gill';
-import { ESCROW_PROGRAM_ADDRESS } from '../clients/js/src/generated';
 
 describe('Escrow', async () => {
   let testEnv: TestEnvironment;
@@ -25,12 +24,15 @@ describe('Escrow', async () => {
   describe('makeOffer', () => {
     it('successfully creates an offer with valid inputs', async () => {
       const id = getRandomId();
-      const { vault } = await sendMakeOfferInstruction({
+      const { vault, transactionMessage } = await createMakeOfferInstruction({
         testEnv,
         id,
         tokenAAmountOffered,
         tokenBAmountWanted,
       });
+      const signedTransaction =
+        await signTransactionMessageWithSigners(transactionMessage);
+      await testEnv.sendAndConfirmTransaction(signedTransaction);
       const {
         value: { amount },
       } = await testEnv.rpc.getTokenAccountBalance(vault).send();
@@ -43,19 +45,26 @@ describe('Escrow', async () => {
 
     it('fails when trying to reuse an existing offer ID', async () => {
       const id = getRandomId();
-      await sendMakeOfferInstruction({
+      let { transactionMessage } = await createMakeOfferInstruction({
         testEnv,
         id,
         tokenAAmountOffered,
         tokenBAmountWanted,
       });
+      const signedTransaction =
+        await signTransactionMessageWithSigners(transactionMessage);
+      await testEnv.sendAndConfirmTransaction(signedTransaction);
+      ({ transactionMessage } = await createMakeOfferInstruction({
+        testEnv,
+        id,
+        tokenAAmountOffered,
+        tokenBAmountWanted,
+        maker: testEnv.bob,
+      }));
       try {
-        await sendMakeOfferInstruction({
-          testEnv,
-          id,
-          tokenAAmountOffered,
-          tokenBAmountWanted,
-        });
+        const signedTransaction =
+          await signTransactionMessageWithSigners(transactionMessage);
+        await testEnv.sendAndConfirmTransaction(signedTransaction);
         assert.ok(false, 'Offer creation did not fail for same ID');
       } catch (err) {
         if (
@@ -65,7 +74,13 @@ describe('Escrow', async () => {
           )
         ) {
           const underlyingError = err.cause;
-          assert.ok(true);
+          assert.ok(
+            isProgramError(
+              underlyingError,
+              transactionMessage,
+              testEnv.programClient.ESCROW_PROGRAM_ADDRESS
+            )
+          );
         }
       }
     });

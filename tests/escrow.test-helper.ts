@@ -152,7 +152,7 @@ async function generateKeyPairSignerWithSol(
   return signer;
 }
 
-export async function sendMakeOfferInstruction({
+export async function createMakeOfferInstruction({
   testEnv,
   id,
   tokenAAmountOffered,
@@ -184,8 +184,6 @@ export async function sendMakeOfferInstruction({
     instructions: [makeOfferIx],
     latestBlockhash,
   });
-  const signedTransaction = await signTransactionMessageWithSigners(createTx);
-  await testEnv.sendAndConfirmTransaction(signedTransaction);
 
   const idBuffer = Buffer.alloc(8);
   idBuffer.writeBigUInt64LE(id);
@@ -199,5 +197,5 @@ export async function sendMakeOfferInstruction({
     offer,
     TOKEN_2022_PROGRAM_ADDRESS
   );
-  return { offer, vault };
+  return { offer, vault, transactionMessage: createTx };
 }
