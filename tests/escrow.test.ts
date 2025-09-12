@@ -5,6 +5,7 @@ import {
   getRandomId,
   createMakeOfferInstruction,
   TestEnvironment,
+  ANCHOR_ERROR__ACCOUNT_ALREADY_IN_USE,
 } from './escrow.test-helper';
 import {
   isProgramError,
@@ -54,6 +55,7 @@ describe('Escrow', async () => {
       const signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
       await testEnv.sendAndConfirmTransaction(signedTransaction);
+
       ({ transactionMessage } = await createMakeOfferInstruction({
         testEnv,
         id,
@@ -64,6 +66,7 @@ describe('Escrow', async () => {
         const signedTransaction =
           await signTransactionMessageWithSigners(transactionMessage);
         await testEnv.sendAndConfirmTransaction(signedTransaction);
+
         assert.ok(false, 'Offer creation did not fail for same ID');
       } catch (err) {
         if (
@@ -77,7 +80,8 @@ describe('Escrow', async () => {
             isProgramError(
               underlyingError,
               transactionMessage,
-              testEnv.programClient.ESCROW_PROGRAM_ADDRESS
+              testEnv.programClient.ESCROW_PROGRAM_ADDRESS,
+              ANCHOR_ERROR__ACCOUNT_ALREADY_IN_USE
             )
           );
         }

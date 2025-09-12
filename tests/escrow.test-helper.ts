@@ -28,6 +28,8 @@ export function getRandomId() {
   return randomBytes(8).readBigUInt64LE();
 }
 
+export const ANCHOR_ERROR__ACCOUNT_ALREADY_IN_USE = 0x0;
+
 type RpcClient = {
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
