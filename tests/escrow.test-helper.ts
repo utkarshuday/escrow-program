@@ -5,6 +5,7 @@ import {
   createTransaction,
   generateKeyPairSigner,
   getProgramDerivedAddress,
+  getU64Encoder,
   lamports,
   MessageSigner,
   Rpc,
@@ -27,8 +28,6 @@ import { randomBytes } from 'node:crypto';
 export function getRandomId() {
   return randomBytes(8).readBigUInt64LE();
 }
-
-export const ANCHOR_ERROR__ACCOUNT_ALREADY_IN_USE = 0x0;
 
 type RpcClient = {
   rpc: Rpc<SolanaRpcApi>;
@@ -161,6 +160,8 @@ export async function createMakeOfferInstruction({
   tokenBAmountWanted,
   maker = testEnv.alice,
   tokenProgram = TOKEN_2022_PROGRAM_ADDRESS,
+  tokenMintA = testEnv.tokenMintA,
+  tokenMintB = testEnv.tokenMintB,
 }: {
   testEnv: TestEnvironment;
   id: bigint;
@@ -168,12 +169,14 @@ export async function createMakeOfferInstruction({
   tokenBAmountWanted: number;
   maker?: TransactionSigner & MessageSigner;
   tokenProgram?: Address;
+  tokenMintA?: Address;
+  tokenMintB?: Address;
 }) {
   const makeOfferIx = await testEnv.programClient.getMakeOfferInstructionAsync({
     maker,
     tokenProgram,
-    tokenMintA: testEnv.tokenMintA,
-    tokenMintB: testEnv.tokenMintB,
+    tokenMintA,
+    tokenMintB,
     id,
     tokenAAmountOffered,
     tokenBAmountWanted,
@@ -187,11 +190,9 @@ export async function createMakeOfferInstruction({
     latestBlockhash,
   });
 
-  const idBuffer = Buffer.alloc(8);
-  idBuffer.writeBigUInt64LE(id);
   const [offer] = await getProgramDerivedAddress({
     programAddress: testEnv.programClient.ESCROW_PROGRAM_ADDRESS,
-    seeds: ['offer', idBuffer],
+    seeds: ['offer', getU64Encoder().encode(id)],
   });
 
   const vault = await getAssociatedTokenAccountAddress(
