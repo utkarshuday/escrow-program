@@ -1,9 +1,12 @@
 import {
   Address,
   airdropFactory,
+  Base64EncodedBytes,
   createSolanaClient,
   createTransaction,
   generateKeyPairSigner,
+  getBase64Decoder,
+  getBase64Encoder,
   getProgramDerivedAddress,
   getU64Encoder,
   lamports,
@@ -42,10 +45,17 @@ export type TestEnvironment = RpcClient & {
   tokenMintA: Address;
   tokenMintB: Address;
   aliceTokenAccountA: Address;
+  bobTokenAccountA: Address;
+  aliceTokenAccountB: Address;
   bobTokenAccountB: Address;
+  bobInitialTokenBAmount: bigint;
+  aliceInitialTokenAAamount: bigint;
   programClient: typeof programClient;
 };
 
+const tokenDecimals = 9;
+export const DECIMALS = 10n ** BigInt(tokenDecimals);
+export const ANCHOR_ERROR__CONSTRAINT_HAS_ONE = 2001;
 export async function createTestEnvironment(): Promise<TestEnvironment> {
   const { rpc, rpcSubscriptions, sendAndConfirmTransaction } =
     createSolanaClient({
@@ -55,6 +65,8 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
   const [authority, alice, bob] = await Promise.all(
     Array.from({ length: 3 }, () => generateKeyPairSignerWithSol(rpcClient))
   );
+  const aliceInitialTokenAAamount = 1000n * DECIMALS;
+  const bobInitialTokenBAmount = 100n * DECIMALS;
 
   const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
   const tokenMintA = await generateKeyPairSigner();
@@ -62,6 +74,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     feePayer: authority,
     latestBlockhash,
     mint: tokenMintA,
+    decimals: tokenDecimals,
     metadata: {
       isMutable: true,
       name: 'Token A',
@@ -79,6 +92,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     feePayer: authority,
     latestBlockhash,
     mint: tokenMintB,
+    decimals: tokenDecimals,
     metadata: {
       isMutable: true,
       name: 'Token B',
@@ -95,7 +109,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     latestBlockhash,
     mint: tokenMintA,
     mintAuthority: authority,
-    amount: 1000 * 1_000_000_000,
+    amount: aliceInitialTokenAAamount,
     destination: alice.address,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
   });
@@ -107,7 +121,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     latestBlockhash,
     mint: tokenMintB,
     mintAuthority: authority,
-    amount: 100 * 1_000_000_000,
+    amount: bobInitialTokenBAmount,
     destination: bob.address,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
   });
@@ -117,6 +131,18 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
   const aliceTokenAccountA = await getAssociatedTokenAccountAddress(
     tokenMintA,
     alice.address,
+    TOKEN_2022_PROGRAM_ADDRESS
+  );
+
+  const aliceTokenAccountB = await getAssociatedTokenAccountAddress(
+    tokenMintB,
+    alice.address,
+    TOKEN_2022_PROGRAM_ADDRESS
+  );
+
+  const bobTokenAccountA = await getAssociatedTokenAccountAddress(
+    tokenMintA,
+    bob.address,
     TOKEN_2022_PROGRAM_ADDRESS
   );
 
@@ -136,13 +162,17 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     tokenMintB: tokenMintB.address,
     aliceTokenAccountA,
     bobTokenAccountB,
+    aliceTokenAccountB,
+    bobTokenAccountA,
+    aliceInitialTokenAAamount,
+    bobInitialTokenBAmount,
     programClient,
   };
 }
 
 async function generateKeyPairSignerWithSol(
   rpcClient: RpcClient,
-  putativeLamports: bigint = 1_000_000_000n
+  putativeLamports: bigint = DECIMALS
 ) {
   const signer = await generateKeyPairSigner();
   await airdropFactory(rpcClient)({
@@ -153,7 +183,7 @@ async function generateKeyPairSignerWithSol(
   return signer;
 }
 
-export async function createMakeOfferInstruction({
+export async function createMakeOfferTransaction({
   testEnv,
   id,
   tokenAAmountOffered,
@@ -165,8 +195,8 @@ export async function createMakeOfferInstruction({
 }: {
   testEnv: TestEnvironment;
   id: bigint;
-  tokenAAmountOffered: number;
-  tokenBAmountWanted: number;
+  tokenAAmountOffered: number | bigint;
+  tokenBAmountWanted: number | bigint;
   maker?: TransactionSigner & MessageSigner;
   tokenProgram?: Address;
   tokenMintA?: Address;
@@ -201,4 +231,87 @@ export async function createMakeOfferInstruction({
     TOKEN_2022_PROGRAM_ADDRESS
   );
   return { offer, vault, transactionMessage: createTx };
+}
+
+export async function createTakeOfferTransaction({
+  testEnv,
+  offer,
+  tokenProgram = TOKEN_2022_PROGRAM_ADDRESS,
+}: {
+  testEnv: TestEnvironment;
+  offer: Address;
+  tokenProgram?: Address;
+}) {
+  const takeOfferIx = await testEnv.programClient.getTakeOfferInstructionAsync({
+    offer,
+    taker: testEnv.bob,
+    tokenMintA: testEnv.tokenMintA,
+    tokenMintB: testEnv.tokenMintB,
+    maker: testEnv.alice.address,
+    tokenProgram,
+  });
+  const { value: latestBlockhash } = await testEnv.rpc
+    .getLatestBlockhash()
+    .send();
+  const createTx = createTransaction({
+    feePayer: testEnv.bob,
+    instructions: [takeOfferIx],
+    latestBlockhash,
+  });
+  return { transactionMessage: createTx };
+}
+
+export async function createRefundOfferTransaction({
+  testEnv,
+  offer,
+  tokenProgram = TOKEN_2022_PROGRAM_ADDRESS,
+  maker = testEnv.alice,
+}: {
+  testEnv: TestEnvironment;
+  offer: Address;
+  tokenProgram?: Address;
+  maker?: TransactionSigner & MessageSigner;
+}) {
+  const refundOfferIx =
+    await testEnv.programClient.getRefundOfferInstructionAsync({
+      offer,
+      tokenMintA: testEnv.tokenMintA,
+      tokenMintB: testEnv.tokenMintB,
+      maker,
+      tokenProgram,
+    });
+  const { value: latestBlockhash } = await testEnv.rpc
+    .getLatestBlockhash()
+    .send();
+  const createTx = createTransaction({
+    feePayer: maker,
+    instructions: [refundOfferIx],
+    latestBlockhash,
+  });
+  return { transactionMessage: createTx };
+}
+
+export async function getAllOffers(testEnv: TestEnvironment) {
+  const accounts = await testEnv.rpc
+    .getProgramAccounts(testEnv.programClient.ESCROW_PROGRAM_ADDRESS, {
+      encoding: 'base64',
+      filters: [
+        {
+          memcmp: {
+            offset: 0n,
+            bytes: getBase64Decoder().decode(
+              testEnv.programClient.OFFER_DISCRIMINATOR
+            ) as Base64EncodedBytes,
+            encoding: 'base64',
+          },
+        },
+      ],
+    })
+    .send();
+  const decodedAccounts = accounts.map(account =>
+    testEnv.programClient
+      .getOfferDecoder()
+      .decode(getBase64Encoder().encode(account.account.data[0]))
+  );
+  return decodedAccounts;
 }
