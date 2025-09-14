@@ -16,8 +16,8 @@ import {
   isProgramError,
   isSolanaError,
   signTransactionMessageWithSigners,
-  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
   type Address,
+  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
 } from 'gill';
 import {
   SYSTEM_ERROR__ACCOUNT_ALREADY_IN_USE,

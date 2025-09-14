@@ -24,7 +24,6 @@ import type {
   TransactionSigner,
 } from 'gill';
 import {
-  buildCreateTokenTransaction,
   buildMintTokensTransaction,
   getAssociatedTokenAccountAddress,
   getCreateAccountInstruction,
