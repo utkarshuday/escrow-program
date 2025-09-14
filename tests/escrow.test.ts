@@ -10,6 +10,7 @@ import {
   ANCHOR_ERROR__CONSTRAINT_HAS_ONE,
   DECIMALS,
   type TestEnvironment,
+  ANCHOR_ERROR__ACCOUNT_NOT_INITIALIZED,
 } from './escrow.test-helper';
 import {
   isProgramError,
@@ -21,6 +22,8 @@ import {
 import {
   SYSTEM_ERROR__ACCOUNT_ALREADY_IN_USE,
   TOKEN_2022_ERROR__INSUFFICIENT_FUNDS,
+  TOKEN_2022_PROGRAM_ADDRESS,
+  TOKEN_PROGRAM_ADDRESS,
 } from 'gill/programs';
 
 describe('Escrow', () => {
@@ -73,7 +76,6 @@ describe('Escrow', () => {
       }));
       signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
-
       await assert.rejects(
         testEnv.sendAndConfirmTransaction(signedTransaction),
         err => {
@@ -307,13 +309,12 @@ describe('Escrow', () => {
     let offerAddress: Address;
     before(async () => {
       const id = getRandomId();
-      const { vault, offer, transactionMessage } =
-        await createMakeOfferTransaction({
-          testEnv,
-          id,
-          tokenAAmountOffered,
-          tokenBAmountWanted,
-        });
+      const { offer, transactionMessage } = await createMakeOfferTransaction({
+        testEnv,
+        id,
+        tokenAAmountOffered,
+        tokenBAmountWanted,
+      });
       offerAddress = offer;
       const signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
@@ -329,6 +330,7 @@ describe('Escrow', () => {
       const signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
       await testEnv.sendAndConfirmTransaction(signedTransaction);
+
       const {
         value: { amount: bobTokenAccountABalance },
       } = await testEnv.rpc
@@ -345,7 +347,6 @@ describe('Escrow', () => {
       } = await testEnv.rpc
         .getTokenAccountBalance(testEnv.aliceTokenAccountB)
         .send();
-
       assert.equal(
         aliceTokenAccountBBalance,
         tokenBAmountWanted,
@@ -362,15 +363,14 @@ describe('Escrow', () => {
         tokenBAmountWanted: lotOfTokenBAmount,
         id,
       });
+      offerAddress = offer;
       let signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
       await testEnv.sendAndConfirmTransaction(signedTransaction);
-
       ({ transactionMessage } = await createTakeOfferTransaction({
         testEnv,
         offer,
       }));
-
       signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
       await assert.rejects(
@@ -389,6 +389,43 @@ describe('Escrow', () => {
                 transactionMessage,
                 testEnv.programClient.ESCROW_PROGRAM_ADDRESS,
                 TOKEN_2022_ERROR__INSUFFICIENT_FUNDS
+              )
+            );
+            return true;
+          }
+        },
+        'Expected the take offer to fail but it succeeded'
+      );
+    });
+
+    it('fails when taker provides wrong token program for mint a', async () => {
+      const { transactionMessage } = await createTakeOfferTransaction({
+        testEnv,
+        offer: offerAddress,
+        tokenProgramA:
+          testEnv.tokenProgramForTokenMintA === TOKEN_2022_PROGRAM_ADDRESS
+            ? TOKEN_PROGRAM_ADDRESS
+            : TOKEN_2022_PROGRAM_ADDRESS,
+      });
+
+      const signedTransaction =
+        await signTransactionMessageWithSigners(transactionMessage);
+      await assert.rejects(
+        testEnv.sendAndConfirmTransaction(signedTransaction),
+        err => {
+          if (
+            isSolanaError(
+              err,
+              SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+            )
+          ) {
+            const underlyingError = err.cause;
+            assert.ok(
+              isProgramError(
+                underlyingError,
+                transactionMessage,
+                testEnv.programClient.ESCROW_PROGRAM_ADDRESS,
+                ANCHOR_ERROR__ACCOUNT_NOT_INITIALIZED
               )
             );
             return true;

@@ -8,7 +8,10 @@ use crate::{ handlers::shared::{ close_token_account, transfer_tokens }, state::
 #[derive(Accounts)]
 pub struct TakeOffer<'info> {
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program_b: Interface<'info, TokenInterface>,
+
+    pub token_program_a: Interface<'info, TokenInterface>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     #[account(mut)]
@@ -17,10 +20,8 @@ pub struct TakeOffer<'info> {
     #[account(mut)]
     pub maker: SystemAccount<'info>,
 
-    #[account(mint::token_program = token_program)]
     pub token_mint_a: InterfaceAccount<'info, Mint>,
 
-    #[account(mint::token_program = token_program)]
     pub token_mint_b: InterfaceAccount<'info, Mint>,
 
     #[account(
@@ -28,7 +29,7 @@ pub struct TakeOffer<'info> {
         close = maker,
         has_one = token_mint_b, 
         has_one = maker,
-        seeds = [b"offer", offer.id.to_le_bytes().as_ref()], // what is going on here ?
+        seeds = [b"offer", offer.id.to_le_bytes().as_ref()], 
         bump = offer.bump
     )]
     pub offer: Account<'info, Offer>,
@@ -38,7 +39,7 @@ pub struct TakeOffer<'info> {
         payer = taker,
         associated_token::mint = token_mint_a,
         associated_token::authority = taker,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program_a
     )]
     pub taker_token_account_a: InterfaceAccount<'info, TokenAccount>,
 
@@ -46,7 +47,7 @@ pub struct TakeOffer<'info> {
         mut,
         associated_token::mint = token_mint_b,
         associated_token::authority = taker,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program_b
     )]
     pub taker_token_account_b: InterfaceAccount<'info, TokenAccount>,
 
@@ -54,7 +55,7 @@ pub struct TakeOffer<'info> {
         mut,
         associated_token::mint = token_mint_a,
         associated_token::authority = offer,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program_a
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
@@ -63,7 +64,7 @@ pub struct TakeOffer<'info> {
         payer = taker,
         associated_token::mint = token_mint_b,
         associated_token::authority = maker,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program_b
     )]
     pub maker_token_account_b: InterfaceAccount<'info, TokenAccount>,
 }
@@ -77,7 +78,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         &ctx.accounts.vault,
         &ctx.accounts.taker_token_account_a,
         &ctx.accounts.vault.amount,
-        &ctx.accounts.token_program,
+        &ctx.accounts.token_program_a,
         &ctx.accounts.token_mint_a,
         &ctx.accounts.offer.to_account_info(),
         signer_seeds
@@ -87,7 +88,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         &ctx.accounts.vault,
         &ctx.accounts.offer.to_account_info(),
         &ctx.accounts.maker.to_account_info(),
-        &ctx.accounts.token_program,
+        &ctx.accounts.token_program_a,
         signer_seeds
     )?;
 
@@ -95,7 +96,7 @@ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
         &ctx.accounts.taker_token_account_b,
         &ctx.accounts.maker_token_account_b,
         &ctx.accounts.offer.token_b_amount_wanted,
-        &ctx.accounts.token_program,
+        &ctx.accounts.token_program_b,
         &ctx.accounts.token_mint_b,
         &ctx.accounts.taker,
         None

@@ -11,23 +11,20 @@ use super::shared::transfer_tokens;
 #[instruction(id: u64)]
 pub struct MakeOffer<'info> {
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program_a: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     #[account(mut)]
     pub maker: Signer<'info>,
 
-    #[account(mint::token_program = token_program)]
     pub token_mint_a: InterfaceAccount<'info, Mint>,
-
-    #[account(mint::token_program = token_program)]
     pub token_mint_b: InterfaceAccount<'info, Mint>,
 
     #[account(
       mut,
       associated_token::mint = token_mint_a,
       associated_token::authority = maker,
-      associated_token::token_program = token_program
+      associated_token::token_program = token_program_a
     )]
     pub maker_token_account_a: InterfaceAccount<'info, TokenAccount>,
 
@@ -45,7 +42,7 @@ pub struct MakeOffer<'info> {
         payer = maker,
         associated_token::mint = token_mint_a,
         associated_token::authority = offer,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program_a
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 }
@@ -77,7 +74,7 @@ pub fn make_offer(
         &ctx.accounts.maker_token_account_a,
         &ctx.accounts.vault,
         &token_a_amount_offered,
-        &ctx.accounts.token_program,
+        &ctx.accounts.token_program_a,
         &ctx.accounts.token_mint_a,
         &ctx.accounts.maker,
         None

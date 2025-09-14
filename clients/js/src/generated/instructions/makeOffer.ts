@@ -55,9 +55,7 @@ export type MakeOfferInstruction<
   TAccountSystemProgram extends
     | string
     | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountTokenProgramA extends string | AccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | AccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -75,9 +73,9 @@ export type MakeOfferInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
+      TAccountTokenProgramA extends string
+        ? ReadonlyAccount<TAccountTokenProgramA>
+        : TAccountTokenProgramA,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -150,7 +148,7 @@ export function getMakeOfferInstructionDataCodec(): FixedSizeCodec<
 
 export type MakeOfferAsyncInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMaker extends string = string,
   TAccountTokenMintA extends string = string,
@@ -160,7 +158,7 @@ export type MakeOfferAsyncInput<
   TAccountVault extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   maker: TransactionSigner<TAccountMaker>;
   tokenMintA: Address<TAccountTokenMintA>;
@@ -175,7 +173,7 @@ export type MakeOfferAsyncInput<
 
 export async function getMakeOfferInstructionAsync<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramA extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMaker extends string,
   TAccountTokenMintA extends string,
@@ -187,7 +185,7 @@ export async function getMakeOfferInstructionAsync<
 >(
   input: MakeOfferAsyncInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountMaker,
     TAccountTokenMintA,
@@ -201,7 +199,7 @@ export async function getMakeOfferInstructionAsync<
   MakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountMaker,
     TAccountTokenMintA,
@@ -217,7 +215,7 @@ export async function getMakeOfferInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -245,10 +243,6 @@ export async function getMakeOfferInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -259,7 +253,7 @@ export async function getMakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.maker.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -279,7 +273,7 @@ export async function getMakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.offer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -289,7 +283,7 @@ export async function getMakeOfferInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.maker),
       getAccountMeta(accounts.tokenMintA),
@@ -305,7 +299,7 @@ export async function getMakeOfferInstructionAsync<
   } as MakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountMaker,
     TAccountTokenMintA,
@@ -320,7 +314,7 @@ export async function getMakeOfferInstructionAsync<
 
 export type MakeOfferInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountMaker extends string = string,
   TAccountTokenMintA extends string = string,
@@ -330,7 +324,7 @@ export type MakeOfferInput<
   TAccountVault extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   maker: TransactionSigner<TAccountMaker>;
   tokenMintA: Address<TAccountTokenMintA>;
@@ -345,7 +339,7 @@ export type MakeOfferInput<
 
 export function getMakeOfferInstruction<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramA extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountMaker extends string,
   TAccountTokenMintA extends string,
@@ -357,7 +351,7 @@ export function getMakeOfferInstruction<
 >(
   input: MakeOfferInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountMaker,
     TAccountTokenMintA,
@@ -370,7 +364,7 @@ export function getMakeOfferInstruction<
 ): MakeOfferInstruction<
   TProgramAddress,
   TAccountSystemProgram,
-  TAccountTokenProgram,
+  TAccountTokenProgramA,
   TAccountAssociatedTokenProgram,
   TAccountMaker,
   TAccountTokenMintA,
@@ -385,7 +379,7 @@ export function getMakeOfferInstruction<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -413,10 +407,6 @@ export function getMakeOfferInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -426,7 +416,7 @@ export function getMakeOfferInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.maker),
       getAccountMeta(accounts.tokenMintA),
@@ -442,7 +432,7 @@ export function getMakeOfferInstruction<
   } as MakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountMaker,
     TAccountTokenMintA,
@@ -462,7 +452,7 @@ export type ParsedMakeOfferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     systemProgram: TAccountMetas[0];
-    tokenProgram: TAccountMetas[1];
+    tokenProgramA: TAccountMetas[1];
     associatedTokenProgram: TAccountMetas[2];
     maker: TAccountMetas[3];
     tokenMintA: TAccountMetas[4];
@@ -496,7 +486,7 @@ export function parseMakeOfferInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       systemProgram: getNextAccount(),
-      tokenProgram: getNextAccount(),
+      tokenProgramA: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       maker: getNextAccount(),
       tokenMintA: getNextAccount(),

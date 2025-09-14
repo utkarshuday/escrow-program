@@ -54,9 +54,7 @@ export type RefundOfferInstruction<
   TAccountSystemProgram extends
     | string
     | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountTokenProgramA extends string | AccountMeta<string> = string,
   TAccountMaker extends string | AccountMeta<string> = string,
   TAccountTokenMintA extends string | AccountMeta<string> = string,
   TAccountTokenMintB extends string | AccountMeta<string> = string,
@@ -71,9 +69,9 @@ export type RefundOfferInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
+      TAccountTokenProgramA extends string
+        ? ReadonlyAccount<TAccountTokenProgramA>
+        : TAccountTokenProgramA,
       TAccountMaker extends string
         ? WritableSignerAccount<TAccountMaker> &
             AccountSignerMeta<TAccountMaker>
@@ -126,7 +124,7 @@ export function getRefundOfferInstructionDataCodec(): FixedSizeCodec<
 
 export type RefundOfferAsyncInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountMaker extends string = string,
   TAccountTokenMintA extends string = string,
   TAccountTokenMintB extends string = string,
@@ -135,7 +133,7 @@ export type RefundOfferAsyncInput<
   TAccountMakerTokenAccountA extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   maker: TransactionSigner<TAccountMaker>;
   tokenMintA: Address<TAccountTokenMintA>;
   tokenMintB: Address<TAccountTokenMintB>;
@@ -146,7 +144,7 @@ export type RefundOfferAsyncInput<
 
 export async function getRefundOfferInstructionAsync<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramA extends string,
   TAccountMaker extends string,
   TAccountTokenMintA extends string,
   TAccountTokenMintB extends string,
@@ -157,7 +155,7 @@ export async function getRefundOfferInstructionAsync<
 >(
   input: RefundOfferAsyncInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountMaker,
     TAccountTokenMintA,
     TAccountTokenMintB,
@@ -170,7 +168,7 @@ export async function getRefundOfferInstructionAsync<
   RefundOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountMaker,
     TAccountTokenMintA,
     TAccountTokenMintB,
@@ -185,7 +183,7 @@ export async function getRefundOfferInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     maker: { value: input.maker ?? null, isWritable: true },
     tokenMintA: { value: input.tokenMintA ?? null, isWritable: false },
     tokenMintB: { value: input.tokenMintB ?? null, isWritable: false },
@@ -206,17 +204,13 @@ export async function getRefundOfferInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.vault.value) {
     accounts.vault.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.offer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -227,7 +221,7 @@ export async function getRefundOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.maker.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -237,7 +231,7 @@ export async function getRefundOfferInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.maker),
       getAccountMeta(accounts.tokenMintA),
       getAccountMeta(accounts.tokenMintB),
@@ -250,7 +244,7 @@ export async function getRefundOfferInstructionAsync<
   } as RefundOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountMaker,
     TAccountTokenMintA,
     TAccountTokenMintB,
@@ -264,7 +258,7 @@ export async function getRefundOfferInstructionAsync<
 
 export type RefundOfferInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountMaker extends string = string,
   TAccountTokenMintA extends string = string,
   TAccountTokenMintB extends string = string,
@@ -273,7 +267,7 @@ export type RefundOfferInput<
   TAccountMakerTokenAccountA extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   maker: TransactionSigner<TAccountMaker>;
   tokenMintA: Address<TAccountTokenMintA>;
   tokenMintB: Address<TAccountTokenMintB>;
@@ -284,7 +278,7 @@ export type RefundOfferInput<
 
 export function getRefundOfferInstruction<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramA extends string,
   TAccountMaker extends string,
   TAccountTokenMintA extends string,
   TAccountTokenMintB extends string,
@@ -295,7 +289,7 @@ export function getRefundOfferInstruction<
 >(
   input: RefundOfferInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountMaker,
     TAccountTokenMintA,
     TAccountTokenMintB,
@@ -307,7 +301,7 @@ export function getRefundOfferInstruction<
 ): RefundOfferInstruction<
   TProgramAddress,
   TAccountSystemProgram,
-  TAccountTokenProgram,
+  TAccountTokenProgramA,
   TAccountMaker,
   TAccountTokenMintA,
   TAccountTokenMintB,
@@ -321,7 +315,7 @@ export function getRefundOfferInstruction<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     maker: { value: input.maker ?? null, isWritable: true },
     tokenMintA: { value: input.tokenMintA ?? null, isWritable: false },
     tokenMintB: { value: input.tokenMintB ?? null, isWritable: false },
@@ -342,16 +336,12 @@ export function getRefundOfferInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.maker),
       getAccountMeta(accounts.tokenMintA),
       getAccountMeta(accounts.tokenMintB),
@@ -364,7 +354,7 @@ export function getRefundOfferInstruction<
   } as RefundOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramA,
     TAccountMaker,
     TAccountTokenMintA,
     TAccountTokenMintB,
@@ -383,7 +373,7 @@ export type ParsedRefundOfferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     systemProgram: TAccountMetas[0];
-    tokenProgram: TAccountMetas[1];
+    tokenProgramA: TAccountMetas[1];
     maker: TAccountMetas[2];
     tokenMintA: TAccountMetas[3];
     tokenMintB: TAccountMetas[4];
@@ -416,7 +406,7 @@ export function parseRefundOfferInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       systemProgram: getNextAccount(),
-      tokenProgram: getNextAccount(),
+      tokenProgramA: getNextAccount(),
       maker: getNextAccount(),
       tokenMintA: getNextAccount(),
       tokenMintB: getNextAccount(),

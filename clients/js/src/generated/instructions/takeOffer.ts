@@ -52,9 +52,8 @@ export type TakeOfferInstruction<
   TAccountSystemProgram extends
     | string
     | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountTokenProgramB extends string | AccountMeta<string> = string,
+  TAccountTokenProgramA extends string | AccountMeta<string> = string,
   TAccountAssociatedTokenProgram extends
     | string
     | AccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
@@ -75,9 +74,12 @@ export type TakeOfferInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
+      TAccountTokenProgramB extends string
+        ? ReadonlyAccount<TAccountTokenProgramB>
+        : TAccountTokenProgramB,
+      TAccountTokenProgramA extends string
+        ? ReadonlyAccount<TAccountTokenProgramA>
+        : TAccountTokenProgramA,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
@@ -142,7 +144,8 @@ export function getTakeOfferInstructionDataCodec(): FixedSizeCodec<
 
 export type TakeOfferAsyncInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramB extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountTaker extends string = string,
   TAccountMaker extends string = string,
@@ -155,7 +158,8 @@ export type TakeOfferAsyncInput<
   TAccountMakerTokenAccountB extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramB: Address<TAccountTokenProgramB>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   taker: TransactionSigner<TAccountTaker>;
   maker: Address<TAccountMaker>;
@@ -170,7 +174,8 @@ export type TakeOfferAsyncInput<
 
 export async function getTakeOfferInstructionAsync<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramB extends string,
+  TAccountTokenProgramA extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountTaker extends string,
   TAccountMaker extends string,
@@ -185,7 +190,8 @@ export async function getTakeOfferInstructionAsync<
 >(
   input: TakeOfferAsyncInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramB,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountTaker,
     TAccountMaker,
@@ -202,7 +208,8 @@ export async function getTakeOfferInstructionAsync<
   TakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramB,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountTaker,
     TAccountMaker,
@@ -221,7 +228,8 @@ export async function getTakeOfferInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramB: { value: input.tokenProgramB ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -255,10 +263,6 @@ export async function getTakeOfferInstructionAsync<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -269,7 +273,7 @@ export async function getTakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.taker.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -280,7 +284,7 @@ export async function getTakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.taker.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramB.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintB.value)),
       ],
     });
@@ -291,7 +295,7 @@ export async function getTakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.offer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramA.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintA.value)),
       ],
     });
@@ -302,7 +306,7 @@ export async function getTakeOfferInstructionAsync<
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
         getAddressEncoder().encode(expectAddress(accounts.maker.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgramB.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMintB.value)),
       ],
     });
@@ -312,7 +316,8 @@ export async function getTakeOfferInstructionAsync<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramB),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.taker),
       getAccountMeta(accounts.maker),
@@ -329,7 +334,8 @@ export async function getTakeOfferInstructionAsync<
   } as TakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramB,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountTaker,
     TAccountMaker,
@@ -347,7 +353,8 @@ export async function getTakeOfferInstructionAsync<
 
 export type TakeOfferInput<
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgramB extends string = string,
+  TAccountTokenProgramA extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountTaker extends string = string,
   TAccountMaker extends string = string,
@@ -360,7 +367,8 @@ export type TakeOfferInput<
   TAccountMakerTokenAccountB extends string = string,
 > = {
   systemProgram?: Address<TAccountSystemProgram>;
-  tokenProgram?: Address<TAccountTokenProgram>;
+  tokenProgramB: Address<TAccountTokenProgramB>;
+  tokenProgramA: Address<TAccountTokenProgramA>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   taker: TransactionSigner<TAccountTaker>;
   maker: Address<TAccountMaker>;
@@ -375,7 +383,8 @@ export type TakeOfferInput<
 
 export function getTakeOfferInstruction<
   TAccountSystemProgram extends string,
-  TAccountTokenProgram extends string,
+  TAccountTokenProgramB extends string,
+  TAccountTokenProgramA extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountTaker extends string,
   TAccountMaker extends string,
@@ -390,7 +399,8 @@ export function getTakeOfferInstruction<
 >(
   input: TakeOfferInput<
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramB,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountTaker,
     TAccountMaker,
@@ -406,7 +416,8 @@ export function getTakeOfferInstruction<
 ): TakeOfferInstruction<
   TProgramAddress,
   TAccountSystemProgram,
-  TAccountTokenProgram,
+  TAccountTokenProgramB,
+  TAccountTokenProgramA,
   TAccountAssociatedTokenProgram,
   TAccountTaker,
   TAccountMaker,
@@ -424,7 +435,8 @@ export function getTakeOfferInstruction<
   // Original accounts.
   const originalAccounts = {
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    tokenProgramB: { value: input.tokenProgramB ?? null, isWritable: false },
+    tokenProgramA: { value: input.tokenProgramA ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
       isWritable: false,
@@ -458,10 +470,6 @@ export function getTakeOfferInstruction<
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
-  }
   if (!accounts.associatedTokenProgram.value) {
     accounts.associatedTokenProgram.value =
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -471,7 +479,8 @@ export function getTakeOfferInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.tokenProgramB),
+      getAccountMeta(accounts.tokenProgramA),
       getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.taker),
       getAccountMeta(accounts.maker),
@@ -488,7 +497,8 @@ export function getTakeOfferInstruction<
   } as TakeOfferInstruction<
     TProgramAddress,
     TAccountSystemProgram,
-    TAccountTokenProgram,
+    TAccountTokenProgramB,
+    TAccountTokenProgramA,
     TAccountAssociatedTokenProgram,
     TAccountTaker,
     TAccountMaker,
@@ -511,17 +521,18 @@ export type ParsedTakeOfferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     systemProgram: TAccountMetas[0];
-    tokenProgram: TAccountMetas[1];
-    associatedTokenProgram: TAccountMetas[2];
-    taker: TAccountMetas[3];
-    maker: TAccountMetas[4];
-    tokenMintA: TAccountMetas[5];
-    tokenMintB: TAccountMetas[6];
-    offer: TAccountMetas[7];
-    takerTokenAccountA: TAccountMetas[8];
-    takerTokenAccountB: TAccountMetas[9];
-    vault: TAccountMetas[10];
-    makerTokenAccountB: TAccountMetas[11];
+    tokenProgramB: TAccountMetas[1];
+    tokenProgramA: TAccountMetas[2];
+    associatedTokenProgram: TAccountMetas[3];
+    taker: TAccountMetas[4];
+    maker: TAccountMetas[5];
+    tokenMintA: TAccountMetas[6];
+    tokenMintB: TAccountMetas[7];
+    offer: TAccountMetas[8];
+    takerTokenAccountA: TAccountMetas[9];
+    takerTokenAccountB: TAccountMetas[10];
+    vault: TAccountMetas[11];
+    makerTokenAccountB: TAccountMetas[12];
   };
   data: TakeOfferInstructionData;
 };
@@ -534,7 +545,7 @@ export function parseTakeOfferInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedTakeOfferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 12) {
+  if (instruction.accounts.length < 13) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -548,7 +559,8 @@ export function parseTakeOfferInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       systemProgram: getNextAccount(),
-      tokenProgram: getNextAccount(),
+      tokenProgramB: getNextAccount(),
+      tokenProgramA: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       taker: getNextAccount(),
       maker: getNextAccount(),
